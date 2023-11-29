@@ -1,0 +1,333 @@
+{
+  "Name": "Human NGS Immune Cell Typing Protein", 
+  "Version": 1.0, 
+  "AnalyteType": "Protein", 
+  "MinArea": 1600, 
+  "MinNuclei": 20, 
+  "Compatibility": "01", 
+  "Date": "201203", 
+  "ReporterSpace": "0", 
+  "ProbeGroups": [
+    {
+      "Name": "Cytotoxicity", 
+      "Targets": [
+        "GZMB"
+      ]
+    }, 
+    {
+      "Name": "Th cells", 
+      "Targets": [
+        "CD4", 
+        "FOXP3"
+      ]
+    }, 
+    {
+      "Name": "B cells", 
+      "Targets": [
+        "CD20"
+      ]
+    }, 
+    {
+      "Name": "Tregs", 
+      "Targets": [
+        "FOXP3"
+      ]
+    }, 
+    {
+      "Name": "NK cells", 
+      "Targets": [
+        "CD56"
+      ]
+    }, 
+    {
+      "Name": "Neutrophil", 
+      "Targets": [
+        "CD66b"
+      ]
+    }, 
+    {
+      "Name": "T cells", 
+      "Targets": [
+        "CD3", 
+        "CD4", 
+        "CD8", 
+        "FOXP3"
+      ]
+    }, 
+    {
+      "Name": "Fibroblasts", 
+      "Targets": [
+        "Fibronectin"
+      ]
+    }, 
+    {
+      "Name": "Myeloid", 
+      "Targets": [
+        "CD66b", 
+        "CD4"
+      ]
+    }, 
+    {
+      "Name": "Hematopoietic", 
+      "Targets": [
+        "CD34"
+      ]
+    }, 
+    {
+      "Name": "CD8 T cells", 
+      "Targets": [
+        "CD8"
+      ]
+    }, 
+    {
+      "Name": "Stroma", 
+      "Targets": [
+        "Fibronectin"
+      ]
+    }, 
+    {
+      "Name": "T cell Activation", 
+      "Targets": [
+        "GZMB"
+      ]
+    }
+  ], 
+  "ProbeGroupVersion": 1.0, 
+  "Targets": [
+    {
+      "GeneID": [
+        50943
+      ], 
+      "AnalyteType": "Protein", 
+      "DisplayName": "FOXP3", 
+      "SystematicName": [
+        "FOXP3"
+      ], 
+      "CodeClass": "Endogenous", 
+      "RTS_ID": "RTS0020828", 
+      "RTS_Seq": "GTTCCATTGATG", 
+      "Probes": [
+        {
+          "ProbeID": "DPROT_00047.1", 
+          "Accession": [
+            "B7ZLG1", 
+            "Q9BZS1"
+          ]
+        }
+      ]
+    }, 
+    {
+      "GeneID": [
+        4684
+      ], 
+      "AnalyteType": "Protein", 
+      "DisplayName": "CD56", 
+      "SystematicName": [
+        "NCAM1"
+      ], 
+      "CodeClass": "Endogenous", 
+      "RTS_ID": "RTS0020791", 
+      "RTS_Seq": "ATCTAACTACCG", 
+      "Probes": [
+        {
+          "ProbeID": "DPROT_00016.1", 
+          "Accession": [
+            "A0A087WWD4", 
+            "P13591"
+          ]
+        }
+      ]
+    }, 
+    {
+      "GeneID": [
+        3002
+      ], 
+      "AnalyteType": "Protein", 
+      "DisplayName": "GZMB", 
+      "SystematicName": [
+        "GZMB"
+      ], 
+      "CodeClass": "Endogenous", 
+      "RTS_ID": "RTS0020799", 
+      "RTS_Seq": "TGCAACGTGCAC", 
+      "Probes": [
+        {
+          "ProbeID": "DPROT_00019.1", 
+          "Accession": [
+            "Q67BC3", 
+            "J3KQ52", 
+            "P10144", 
+            "Q6XGZ4"
+          ]
+        }
+      ]
+    }, 
+    {
+      "GeneID": [
+        1088
+      ], 
+      "AnalyteType": "Protein", 
+      "DisplayName": "CD66b", 
+      "SystematicName": [
+        "CEACAM8"
+      ], 
+      "CodeClass": "Endogenous", 
+      "RTS_ID": "RTS0020824", 
+      "RTS_Seq": "ATCGGTCATCCT", 
+      "Probes": [
+        {
+          "ProbeID": "DPROT_00049.1", 
+          "Accession": [
+            "B4DLI3", 
+            "Q0Z7S6", 
+            "P31997"
+          ]
+        }
+      ]
+    }, 
+    {
+      "GeneID": [
+        931
+      ], 
+      "AnalyteType": "Protein", 
+      "DisplayName": "CD20", 
+      "SystematicName": [
+        "MS4A1"
+      ], 
+      "CodeClass": "Endogenous", 
+      "RTS_ID": "RTS0020780", 
+      "RTS_Seq": "AAGATAAGTTGC", 
+      "Probes": [
+        {
+          "ProbeID": "DPROT_00012.1", 
+          "Accession": [
+            "P11836", 
+            "A0A024R507"
+          ]
+        }
+      ]
+    }, 
+    {
+      "GeneID": [
+        947
+      ], 
+      "AnalyteType": "Protein", 
+      "DisplayName": "CD34", 
+      "SystematicName": [
+        "CD34"
+      ], 
+      "CodeClass": "Endogenous", 
+      "RTS_ID": "RTS0020830", 
+      "RTS_Seq": "GAATGGTGTATC", 
+      "Probes": [
+        {
+          "ProbeID": "DPROT_00048.1", 
+          "Accession": [
+            "P28906"
+          ]
+        }
+      ]
+    }, 
+    {
+      "GeneID": [
+        920
+      ], 
+      "AnalyteType": "Protein", 
+      "DisplayName": "CD4", 
+      "SystematicName": [
+        "CD4"
+      ], 
+      "CodeClass": "Endogenous", 
+      "RTS_ID": "RTS0020781", 
+      "RTS_Seq": "GATCTATACAGG", 
+      "Probes": [
+        {
+          "ProbeID": "DPROT_00014.1", 
+          "Accession": [
+            "B4DT49", 
+            "P01730", 
+            "B0AZV7"
+          ]
+        }
+      ]
+    }, 
+    {
+      "GeneID": [
+        2335
+      ], 
+      "AnalyteType": "Protein", 
+      "DisplayName": "Fibronectin", 
+      "SystematicName": [
+        "FN1"
+      ], 
+      "CodeClass": "Endogenous", 
+      "RTS_ID": "RTS0020793", 
+      "RTS_Seq": "AGATCGTCTACG", 
+      "Probes": [
+        {
+          "ProbeID": "DPROT_00024.1", 
+          "Accession": [
+            "Q6MZF4", 
+            "Q6N084", 
+            "B7ZLE5", 
+            "P02751", 
+            "Q9UQS6", 
+            "Q6MZM7"
+          ]
+        }
+      ]
+    }, 
+    {
+      "GeneID": [
+        915, 
+        916, 
+        917
+      ], 
+      "AnalyteType": "Protein", 
+      "DisplayName": "CD3", 
+      "SystematicName": [
+        "CD3D", 
+        "CD3E", 
+        "CD3G"
+      ], 
+      "CodeClass": "Endogenous", 
+      "RTS_ID": "RTS0020792", 
+      "RTS_Seq": "TACTATCCACAC", 
+      "Probes": [
+        {
+          "ProbeID": "DPROT_00013.1", 
+          "Accession": [
+            "P07766", 
+            "P04234", 
+            "B0YIY5", 
+            "P09693", 
+            "B0YIY4"
+          ]
+        }
+      ]
+    }, 
+    {
+      "GeneID": [
+        925
+      ], 
+      "AnalyteType": "Protein", 
+      "DisplayName": "CD8", 
+      "SystematicName": [
+        "CD8A"
+      ], 
+      "CodeClass": "Endogenous", 
+      "RTS_ID": "RTS0020800", 
+      "RTS_Seq": "CGGCGTTCGTAC", 
+      "Probes": [
+        {
+          "ProbeID": "DPROT_00017.1", 
+          "Accession": [
+            "P01732", 
+            "Q6ZVS2", 
+            "Q8TAW8"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,174 @@
+---
+title: "nanostring_geomx_proteogenomics_protein_sept6"
+author: "eric allenspach"
+date: "2023-10-10"
+output: html_document
+---
+
+```{r}
+BiocManager::install(version="3.17")
+
+BiocManager::install("NanoStringNCTools")
+BiocManager::install("GeomxTools")
+BiocManager::install("GeoMxWorkflows")
+```
+
+```{r}
+library(NanoStringNCTools)
+library(GeomxTools)
+library(GeoMxWorkflows)
+```
+
+#loading the data
+```{r}
+datadir <- file.path("/Users/ericallenspach/r_projects/nanostring_protein_sept6/20230331_Allenspach_AllSeq")
+```
+
+```{r}
+# automatically list files in each directory for use
+DCCFiles <- dir(file.path(datadir, "dccs"), pattern = ".dcc$",
+                full.names = TRUE, recursive = TRUE)
+PKCFiles <- dir(file.path(datadir, "pkcs"), pattern = ".pkc$",
+                                full.names = TRUE, recursive = TRUE)
+SampleAnnotationFile <- dir(file.path(datadir, "annotation"), pattern = ".xlsx$",
+        full.names = TRUE, recursive = TRUE)
+```
+
+```{r}
+# Load the data
+ourData <- suppressWarnings(readNanoStringGeoMxSet(dccFiles = DCCFiles,
+                           pkcFiles = PKCFiles,
+                           phenoDataFile = SampleAnnotationFile,
+                           phenoDataSheet = "Template",
+                           phenoDataDccColName = "Sample_ID",
+                           protocolDataColNames = c("aoi", "roi"),
+                           configFile = NULL,
+                           analyte = "protein",
+                           phenoDataColPrefix = "",
+                           experimentDataColNames = NULL))
+```
+
+```{r}
+proteinData <- setSegmentQCFlags(ourData, qcCutoffs = list(percentSaturation = 45,
+                                                               minSegmentReads=1000, 
+                                                               percentAligned=80, 
+                                                               minNegativeCount=10, 
+                                                               maxNTCCount=60, 
+                                                               minNuclei=16000, 
+                                                               minArea=20))
+
+# low sequenced ROIs
+lowSaturation <- which(as.data.frame(protocolData(proteinData)[["QCFlags"]])["LowSaturation"] == TRUE)
+
+# remove low quality ROIs
+passedQC <- proteinData[, -lowSaturation]
+dim(proteinData)
+```
+
+```{r}
+fig <- qcProteinSignal(object = proteinData, neg.names = igg.names)
+
+proteinOrder <- qcProteinSignalNames(object = proteinData, neg.names = igg.names)
+genesOfInterest <- c(which(proteinOrder == "Tyrosine Hydroxylase"),
+                     which(proteinOrder == "ApoA-I"),
+                     which(proteinOrder == "EpCAM"))
+
+fig()
+rect(xleft = 0, xright = 4, 
+     ybottom = -2, ytop = 2, density = 0, col = "#1B9E77", lwd = 2)
+rect(xleft = genesOfInterest[1]-1, xright = genesOfInterest[1]+1, 
+     ybottom = -2, ytop = 1.25, density = 0, col = "#D95F02", lwd = 2)
+rect(xleft = genesOfInterest[2]-1, xright = genesOfInterest[2]+1, 
+     ybottom = -1, ytop = 3, density = 0, col = "#66A61E", lwd = 2)
+rect(xleft = genesOfInterest[3]-1, xright = genesOfInterest[3]+1, 
+     ybottom = -3, ytop = 6.5, density = 0, col = "#E7298A", lwd = 2)
+```
+```{r}
+proteinOrder <- qcProteinSignalNames(object = proteinData, neg.names = igg.names)
+
+P62 <- which(proteinOrder == "P62")
+
+fig()
+```
+
+
+
+```{r}
+plotConcordance(object = proteinData, targetList = igg.names, plotFactor = "group")
+```
+
+```{r}
+normfactors <- computeNormalizationFactors(object = proteinData,
+                                           area = "AOI.Size.um2",
+                                           nuclei = "Nuclei.Counts")
+
+plotNormFactorConcordance(object = proteinData, plotFactor = "group",
+                          normfactors = normfactors)
+```
+
+```{r}
+#HK normalization
+#proteinData <- normalize(proteinData, norm_method="hk", toElt = "hk_norm")
+
+#Background normalization
+proteinData <- normalize(proteinData, norm_method="neg", toElt = "neg_norm")
+
+#Quantile normalization
+proteinData <- normalize(proteinData, norm_method="quant", desiredQuantile = .75, toElt = "q_norm")
+
+names(proteinData@assayData)
+```
+
+```{r}
+# visualize segments
+boxplot(exprs(proteinData),
+        col = "#9EDAE5", main = "Raw Counts",
+        log = "y", names = 1:95, xlab = "Segment",
+        ylab = "Counts, Raw")
+```
+
+```
+```{r}
+# convert test variables to factors
+pData(proteinData)$testClass <-
+    factor(pData(proteinData)$class, c("normal", "disease"))
+pData(proteinData)$testRegion <- 
+    factor(pData(proteinData)$region, c("A", "B"))
+pData(proteinData)[["slide"]] <- 
+    factor(pData(proteinData)[["slide name"]])
+assayDataElement(object = proteinData, elt = "log_q") <-
+    assayDataApply(proteinData, 2, FUN = log, base = 2, elt = "q_norm")
+    
+# run LMM:
+# formula follows conventions defined by the lme4 package
+results2 <- c()
+for(region in c("Control Bone Marrow B", "SETP6 GOF")) {
+    ind <- pData(proteinData)$region == region
+    mixedOutmc <-
+        mixedModelDE(proteinData[, ind],
+                     elt = "log_q",
+                     modelFormula = ~ testClass + (1 | slide),
+                     groupVar = "testClass",
+                     nCores = parallel::detectCores(),
+                     multiCore = FALSE)
+    r_test <- do.call(rbind, mixedOutmc["lsmeans", ])
+    tests <- rownames(r_test)
+    r_test <- as.data.frame(r_test)
+    r_test$Contrast <- tests
+    r_test$Gene <- 
+        unlist(lapply(colnames(mixedOutmc),
+                      rep, nrow(mixedOutmc["lsmeans", ][[1]])))
+    r_test$Subset <- region
+    r_test$FDR <- p.adjust(r_test$`Pr(>|t|)`, method = "fdr")
+    r_test <- r_test[, c("Gene", "Subset", "Contrast", "Estimate", 
+                         "Pr(>|t|)", "FDR")]
+    results2 <- rbind(results2, r_test)
+}
+```
+
+```{r}
+knitr::kable(subset(results2, proteinOrder %in% goi & Subset == "tubule"), digits = 3,
+      caption = "DE results for Genes of Interest",
+      align = "lc", row.names = FALSE)
+```
+
