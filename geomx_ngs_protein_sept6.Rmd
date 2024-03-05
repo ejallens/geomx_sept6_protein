@@ -6,11 +6,11 @@ output: html_document
 ---
 
 ```{r}
-BiocManager::install(version="3.17")
+#BiocManager::install(version="3.17")
 
-BiocManager::install("NanoStringNCTools")
-BiocManager::install("GeomxTools")
-BiocManager::install("GeoMxWorkflows")
+#BiocManager::install("NanoStringNCTools")
+#BiocManager::install("GeomxTools")
+#BiocManager::install("GeoMxWorkflows")
 ```
 
 ```{r}
