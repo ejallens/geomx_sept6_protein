@@ -17,11 +17,12 @@ output: html_document
 library(NanoStringNCTools)
 library(GeomxTools)
 library(GeoMxWorkflows)
+library(here)
 ```
 
 #loading the data
 ```{r}
-datadir <- file.path("/Users/ericallenspach/r_projects/nanostring_protein_sept6/20230331_Allenspach_AllSeq")
+datadir <- here("20230331_Allenspach_AllSeq")
 ```
 
 ```{r}
@@ -64,6 +65,12 @@ lowSaturation <- which(as.data.frame(protocolData(proteinData)[["QCFlags"]])["Lo
 passedQC <- proteinData[, -lowSaturation]
 dim(proteinData)
 ```
+
+```{r}
+igg.names <- iggNames(proteinData)
+igg.names
+```
+
 
 ```{r}
 fig <- qcProteinSignal(object = proteinData, neg.names = igg.names)
@@ -127,7 +134,44 @@ boxplot(exprs(proteinData),
         ylab = "Counts, Raw")
 ```
 
+dimension reductionality
+```{r}
+library(umap)
+library(Rtsne)
+
+# update defaults for umap to contain a stable random_state (seed)
+custom_umap <- umap::umap.defaults
+custom_umap$random_state <- 42
+# run UMAP
+umap_out <-
+    umap(t(log2(assayDataElement(proteinData , elt = "q_norm"))),  
+         config = custom_umap)
+pData(proteinData)[, c("UMAP1", "UMAP2")] <- umap_out$layout[, c(1,2)]
+ggplot(pData(proteinData),
+       aes(x = UMAP1, y = UMAP2, color = region, shape = class)) +
+    geom_point(size = 3) +
+    theme_bw()
 ```
+
+```{r}
+library(umap)
+library(Rtsne)
+
+# update defaults for umap to contain a stable random_state (seed)
+custom_umap <- umap::umap.defaults
+custom_umap$random_state <- 42
+# run UMAP
+umap_out <-
+    umap(t(log2(assayDataElement(proteinData , elt = "q_norm"))),  
+         config = custom_umap)
+pData(proteinData)[, c("UMAP1", "UMAP2")] <- umap_out$layout[, c(1,2)]
+ggplot(pData(proteinData),
+       aes(x = UMAP1, y = UMAP2, color = region, shape = class)) +
+    geom_point(size = 3) +
+    theme_bw()
+```
+
+
 ```{r}
 # convert test variables to factors
 pData(proteinData)$testClass <-
@@ -171,4 +215,6 @@ knitr::kable(subset(results2, proteinOrder %in% goi & Subset == "tubule"), digit
       caption = "DE results for Genes of Interest",
       align = "lc", row.names = FALSE)
 ```
+
+
 
