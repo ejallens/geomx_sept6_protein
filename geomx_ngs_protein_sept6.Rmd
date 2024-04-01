@@ -216,5 +216,46 @@ knitr::kable(subset(results2, proteinOrder %in% goi & Subset == "tubule"), digit
       align = "lc", row.names = FALSE)
 ```
 
+Separate healthy and disease for clustering
+```{r}
+dim(proteinData)
+
+fData(proteinData)
+
+annotation(proteinData)
+
+svarLabels(proteinData)
+
+head(sData(proteinData))
+
+norm_proteinData <- subset(proteinData, select = phenoData(proteinData)[["class"]] == "normal")
+dis_proteinData <- subset(proteinData, select = phenoData(proteinData)[["class"]] == "disease")
+```
+
+Run Umaps
+```{r}
+# update defaults for umap to contain a stable random_state (seed)
+custom_umap <- umap::umap.defaults
+custom_umap$random_state <- 42
+# run UMAP
+umap_out <-
+    umap(t(log2(assayDataElement(norm_proteinData , elt = "q_norm"))),  
+         config = custom_umap)
+pData(norm_proteinData)[, c("UMAP1", "UMAP2")] <- umap_out$layout[, c(1,2)]
+ggplot(pData(norm_proteinData),
+       aes(x = UMAP1, y = UMAP2, color = region, shape = class)) +
+    geom_point(size = 3) +
+    theme_bw()
+
+# run UMAP
+umap_out <-
+    umap(t(log2(assayDataElement(dis_proteinData , elt = "q_norm"))),  
+         config = custom_umap)
+pData(dis_proteinData)[, c("UMAP1", "UMAP2")] <- umap_out$layout[, c(1,2)]
+ggplot(pData(dis_proteinData),
+       aes(x = UMAP1, y = UMAP2, color = region, shape = class)) +
+    geom_point(size = 3) +
+    theme_bw()
+```
 
 
