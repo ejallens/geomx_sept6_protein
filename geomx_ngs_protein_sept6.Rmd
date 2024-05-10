@@ -228,6 +228,8 @@ svarLabels(proteinData)
 
 head(sData(proteinData))
 
+assayData(proteinData)
+
 norm_proteinData <- subset(proteinData, select = phenoData(proteinData)[["class"]] == "normal")
 dis_proteinData <- subset(proteinData, select = phenoData(proteinData)[["class"]] == "disease")
 ```
@@ -258,4 +260,173 @@ ggplot(pData(dis_proteinData),
     theme_bw()
 ```
 
+What makes these different in the disease?
 
+Add expression data to umaps (quantitively color each protein marker onto the umap)
+```{r}
+library(esetVis)
+
+print(esetSpectralMap(eset = norm_proteinData))
+
+ggplot(pData(norm_proteinData),
+       aes(x = UMAP1, y = UMAP2, color = assayData(norm_proteinData), shape = class)) +
+    geom_point(size = 3) +
+    theme_bw()
+```
+They have an option to do this with tSNE, but not umap. That's too bad, I'll have to do it by hand.
+
+```{r}
+library(tidyverse)
+library(janitor)
+
+pData(dis_proteinData)[["UMAP1"]]
+pData(dis_proteinData)[["UMAP2"]]
+sampleNames(dis_proteinData)
+
+umap_dis <- tibble(sample_name = sampleNames(dis_proteinData),
+       umap1 = pData(dis_proteinData)[["UMAP1"]],
+       umap2 = pData(dis_proteinData)[["UMAP2"]])
+
+
+fData(dis_proteinData)[["TargetName"]]
+
+dis_sample_read_counts <- assayDataElement(dis_proteinData, elt = "q_norm") %>%
+  as_tibble(rownames = "surface_marker") %>%
+  pivot_longer(cols = starts_with("DSP"), names_to = "sample_name", values_to = "reads")
+
+dis_df <- left_join(umap_dis, dis_sample_read_counts, by = "sample_name") %>%
+  pivot_wider(names_from = surface_marker, values_from = reads) %>%
+  clean_names()
+```
+
+```{r}
+dis_df %>%
+  ggplot(aes(x = umap1, y = umap2, color = cd3)) +
+  geom_point() +
+  scale_color_viridis_c()
+```
+
+```{r}
+left_join(umap_dis, dis_sample_read_counts, by = "sample_name") %>%
+  clean_names() %>%
+  ggplot(aes(x = umap1, y = umap2, color = reads)) +
+  geom_point() +
+  scale_color_viridis_c() +
+  facet_wrap(~surface_marker)
+
+left_join(umap_dis, dis_sample_read_counts, by = "sample_name") %>%
+  clean_names() %>%
+  group_split(surface_marker) %>%
+  map(~ggplot(., aes(x = umap1, y = umap2, color = reads)) +
+        geom_point() +
+        scale_color_viridis_c() +
+        labs(title = str_c("surface marker: ", .$surface_marker[1]))
+      )
+```
+```{r}
+umap_norm <- tibble(sample_name = sampleNames(norm_proteinData),
+       umap1 = pData(norm_proteinData)[["UMAP1"]],
+       umap2 = pData(norm_proteinData)[["UMAP2"]])
+
+
+fData(norm_proteinData)[["TargetName"]]
+
+norm_sample_read_counts <- assayDataElement(norm_proteinData, elt = "q_norm") %>%
+  as_tibble(rownames = "surface_marker") %>%
+  pivot_longer(cols = starts_with("DSP"), names_to = "sample_name", values_to = "reads")
+
+norm_df <- left_join(umap_norm, norm_sample_read_counts, by = "sample_name") %>%
+  pivot_wider(names_from = surface_marker, values_from = reads) %>%
+  clean_names()
+
+left_join(umap_norm, norm_sample_read_counts, by = "sample_name") %>%
+  clean_names() %>%
+  group_split(surface_marker) %>%
+  map(~ggplot(., aes(x = umap1, y = umap2, color = reads)) +
+        geom_point() +
+        scale_color_viridis_c() +
+        labs(title = str_c("surface marker: ", .$surface_marker[1]))
+      )
+```
+
+
+Want to assign clusters back to transcriptome data
+
+k-means clustering
+"Quick approach:
+If you don't have cluster assignment already, you can quickly run kmeans clustering to partition cells into two populations.
+kmeans(umap_coordinates, k = 2)
+```{r}
+# disease
+kmeans_dis <- umap_dis %>%
+  select(umap1, umap2) %>%
+  kmeans(centers = 2)
+
+dis_df$cluster <- kmeans_dis$cluster
+
+# norm
+kmeans_norm <- umap_norm %>%
+  select(umap1, umap2) %>%
+  kmeans(centers = 2)
+
+norm_df$cluster <- kmeans_norm$cluster
+```
+
+
+Once you have each region assigned to a cluster, you can run a Wilcox rank sum test for each protein, testing expression differences between the clusters. That will give you a ranked list of proteins with fold-change (FC) and significance. You can consider those proteins with large positive FC as markers of regions in cluster 1, and those with large negative FC as markers of cluster 2. 
+wilcox.test(x = cluster1_exp, y = cluster2_exp, paired = F, alternative = "two.sided")
+
+Trying out one before iterating
+```{r}
+test <- dis_df %>%
+  pivot_longer(cols = 4:23, names_to = "surface_marker", values_to = "adj_reads") %>%
+  dplyr::filter(surface_marker == "cd4")
+
+toutput <- wilcox.test(x = test$adj_reads[test$cluster == 1], y = test$adj_reads[test$cluster == 2], paired = FALSE, alternative = "two.sided")
+
+toutput$statistic
+```
+
+
+```{r}
+dis_wil <- dis_df %>%
+  pivot_longer(cols = 4:23, names_to = "surface_marker", values_to = "adj_reads") %>%
+  group_split(surface_marker) %>%
+  map(function(surf_prot) {
+    output <- wilcox.test(x = surf_prot$adj_reads[surf_prot$cluster == 1], y = surf_prot$adj_reads[surf_prot$cluster == 2], paired = FALSE, alternative = "two.sided")
+    
+    tibble(surface_marker = surf_prot$surface_marker[1],
+           statistic = output$statistic,
+           parameter = output$parameter,
+           p_value = output$p.value,
+           null_value = output$null.value,
+           alternative = output$alternative,
+           method = output$method)
+  }) %>%
+  bind_rows()
+
+norm_wil <- norm_df %>%
+  pivot_longer(cols = 4:23, names_to = "surface_marker", values_to = "adj_reads") %>%
+  group_split(surface_marker) %>%
+  map(function(surf_prot) {
+    output <- wilcox.test(x = surf_prot$adj_reads[surf_prot$cluster == 1], y = surf_prot$adj_reads[surf_prot$cluster == 2], paired = FALSE, alternative = "two.sided")
+    
+    tibble(surface_marker = surf_prot$surface_marker[1],
+           statistic = output$statistic,
+           parameter = output$parameter,
+           p_value = output$p.value,
+           null_value = output$null.value,
+           alternative = output$alternative,
+           method = output$method)
+  }) %>%
+  bind_rows()
+```
+
+Where cluster1_exp is a vector with the normalized protein expression values for regions in cluster 1 and cluster2_exp is same thing for cluster 2. You'll want to iterate the test for each protein and then assemble results in a dataframe for comparison.
+```{r}
+dis_wil
+norm_wil
+```
+
+
+ Let me know if you want more detailed sample code."
